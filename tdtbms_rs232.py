@@ -260,7 +260,9 @@ class TDTBMS232:
 
         # Pack current
         pack_current = fields[offset] + fields[offset + 1]  # Combine two bytes for current
+        logger.info(f"Raw pack current: {pack_current}")
         pack_current = round(self.hex_to_signed(pack_current) / 100, 2)   # Convert 10mA to A
+        logger.info(f"Calculated pack current: {pack_current}")
 
         offset += 2
         
