@@ -493,15 +493,17 @@ class TDTBMS232:
         index += 1
 
         if pack_info['balance_state_1'] >1 :
-            raise ValueError(f"Invalid data")
-            return None
+            self.logger.info(f"balance_state_1: {pack_info['balance_state_1']}")
+            #raise ValueError(f"Invalid data")
+            #return None
         
         pack_info['balance_state_2'] = warnstate_bytes[index]
         index += 1
 
         if pack_info['balance_state_2'] >1 :
-            raise ValueError(f"Invalid data")
-            return None
+            self.logger.info(f"balance_state_2: {pack_info['balance_state_2']}")
+            #raise ValueError(f"Invalid data")
+            #return None
 
         # Detailed interpretation for Warn State 1 based on Char A.24
         warn_state_1 = warnstate_bytes[index]
