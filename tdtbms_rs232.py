@@ -67,7 +67,7 @@ class TDTBMS232:
             'product_info': b"\x43\x32",
             'capacity': b"\x41\x36",
             'warning_info': b"\x34\x34",
-            'get_time': b"\x42\x31",
+            'get_date_time': b"\x42\x31",
             'pack_quantity': b"\x39\x30",
         }
         
@@ -78,7 +78,7 @@ class TDTBMS232:
             'product_info': b"000",
             'capacity': b"000",
             'warning_info': b"002",
-            'get_time': b"000",
+            'get_date_time': b"000",
             'pack_quantity': b"000",
         }
     
@@ -157,7 +157,7 @@ class TDTBMS232:
         
         len_id = struct.pack('B', length)
         data = struct.pack('BBBBBB', SOI, VER, ADR, CID1, CID2, length) + data_info + struct.pack('BB', EOI)
-        chk_sum = calculate_checksum(data)
+        chk_sum = self.chksum_calc(data[:-1])
         
         request = data[:-1] + struct.pack('B', chk_sum) + data[-1:]
         return request
@@ -211,7 +211,11 @@ class TDTBMS232:
         # if num_packs != pack_number:
         #     raise ValueError(f"Invalid data")
         #     return None
-    
+
+        if num_packs > 15 :
+            raise ValueError(f"Invalid data")
+            return None
+            
         # for pack_index in range(num_packs):
         pack_data = {}
 
@@ -253,7 +257,7 @@ class TDTBMS232:
         temperatures = []
         for temp_index in range(num_temps):
             temperature = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for temperature
-            temperature = round(temperature / 10 - 273.15, 2)  # Convert tenths of degrees Kelvin to degrees Celsius
+            temperature = round(temperature / 10.0 - 273.15, 2)  # Convert tenths of degrees Kelvin to degrees Celsius
             temperatures.append(temperature)
             offset += 2
         pack_data['temperatures'] = temperatures
@@ -261,7 +265,7 @@ class TDTBMS232:
         # Pack current
         pack_current = fields[offset] + fields[offset + 1]  # Combine two bytes for current
         #self.logger.info(f"Raw pack current: {pack_current}")
-        pack_current = round(self.hex_to_signed(pack_current) / 100, 2)   # Convert 10mA to A
+        pack_current = round(self.hex_to_signed(pack_current) / 100.0, 2) # Convert 10mA to A
         #self.logger.info(f"Calculated pack current: {pack_current}")
 
         offset += 2
@@ -270,20 +274,20 @@ class TDTBMS232:
 
         # Pack total voltage
         pack_total_voltage = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for total voltage
-        pack_total_voltage = round(pack_total_voltage / 1000, 2)  # Convert mV to V
+        pack_total_voltage = round(pack_total_voltage / 1000.0, 3)  # Convert mV to V
         offset += 2
         pack_data['view_voltage'] = pack_total_voltage
 
-        pack_power = round(pack_total_voltage * pack_current / 1000, 4) # Convert W to kW
+        pack_power = round(pack_total_voltage * pack_current / 1000.0, 8)  # Convert W to kW
         pack_data['view_power'] = pack_power
 
-        pack_data['view_energy_charged'] = pack_power * self.data_refresh_interval / 3600 * 1000 if pack_power >= 0 else 0
-        pack_data['view_energy_discharged'] = abs(pack_power) * self.data_refresh_interval / 3600 * 1000 if pack_power < 0 else 0
+        pack_data['view_energy_charged'] = pack_power * self.data_refresh_interval * 1000.0 / 3600.0 if pack_power >= 0 else 0
+        pack_data['view_energy_discharged'] = abs(pack_power) * self.data_refresh_interval * 1000.0 / 3600.0 if pack_power < 0 else 0
         pack_data['view_energy_charged'] = round(pack_data['view_energy_charged'], 5)
         pack_data['view_energy_discharged'] = round(pack_data['view_energy_discharged'], 5)
         # Pack remain capacity
         pack_remain_capacity = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for remaining capacity
-        pack_remain_capacity = round(pack_remain_capacity / 100, 2)  # Convert 10mAH to AH
+        pack_remain_capacity = round(pack_remain_capacity / 100.0, 2)  # Convert 10mAH to AH
         offset += 2
         pack_data['view_remain_capacity'] = pack_remain_capacity
 
@@ -293,11 +297,11 @@ class TDTBMS232:
 
         # Pack full capacity
         pack_full_capacity = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for full capacity
-        pack_full_capacity = round(pack_full_capacity / 100, 2)  # Convert 10mAH to AH
+        pack_full_capacity = round(pack_full_capacity / 100.0, 2)  # Convert 10mAH to AH
         offset += 2
         pack_data['view_full_capacity'] = pack_full_capacity
 
-        pack_data['view_SOC'] = round(pack_remain_capacity / pack_full_capacity * 100, 1)
+        pack_data['view_SOC'] = round(pack_remain_capacity * 100.0 / pack_full_capacity, 2) if pack_full_capacity !=0 else round(0.0, 2)
 
         # Cycle number
         cycle_number = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for cycle number
@@ -306,11 +310,11 @@ class TDTBMS232:
 
         # Pack design capacity
         pack_design_capacity = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for design capacity
-        pack_design_capacity = round(pack_design_capacity / 100, 2)  # Convert 10mAH to AH
+        pack_design_capacity = round(pack_design_capacity / 100.0, 2)  # Convert 10mAH to AH
         offset += 2
         pack_data['view_design_capacity'] = pack_design_capacity
 
-        pack_data['view_SOH'] = round(pack_full_capacity / pack_design_capacity * 100, 0)
+        pack_data['view_SOH'] = round(pack_full_capacity * 100.0 / pack_design_capacity, 2) if pack_design_capacity !=0 else round(0.0, 2) 
 
         # packs_data.append(pack_data)
     
@@ -334,6 +338,7 @@ class TDTBMS232:
         rtn = data[6:8]
         length_high_byte = data[8:10]
         length_low_byte = data[10:12]
+        #infoflag = data[12:14]
         num_pack = data[14:16]
 
         # if int(num_pack, 16) != pack_number:
@@ -460,16 +465,20 @@ class TDTBMS232:
         }
         index += 1
 
+        # Detailed interpretation for Instruction State based on Char A.21
         instruction_state = warnstate_bytes[index]
         pack_info['instruction_state'] = {
+            'status_heart_beat_enabled': bool(instruction_state & 0b10000000),  #think this may be LED
             'status_charger_avaliable': bool(instruction_state & 0b00100000),
             'status_reverse_connected': bool(instruction_state & 0b00010000),
+            'status_pack_enabled': bool(instruction_state & 0b00001000),
             'status_discharge_enabled': bool(instruction_state & 0b00000100),
             'status_charge_enabled': bool(instruction_state & 0b00000010),
             'status_current_limit_enabled': bool(instruction_state & 0b00000001),
         }
         index += 1
         
+        # Detailed interpretation for Control State based on Char A.22
         control_state = warnstate_bytes[index]
         pack_info['control_state'] = {
             'led_warn_function': bool(control_state & 0b00100000),
@@ -479,6 +488,7 @@ class TDTBMS232:
         }
         index += 1
         
+        # Detailed interpretation for Fault State based on Char A.23
         fault_state = warnstate_bytes[index]
         pack_info['fault_state'] = {
             'fault_sampling': bool(fault_state & 0b00100000),
@@ -489,19 +499,40 @@ class TDTBMS232:
         }
         index += 1
         
-        pack_info['balance_state_1'] = warnstate_bytes[index]
+        # Balance State 1 and 2
+        balance_state_1 = warnstate_bytes[index]
+        pack_info['balance_state_1'] = {
+            'balance_channel_1': bool(balance_state_1 & 0b00000001),
+            'balance_channel_2': bool(balance_state_1 & 0b00000010),
+            'balance_channel_3': bool(balance_state_1 & 0b00000100),
+            'balance_channel_4': bool(balance_state_1 & 0b00001000),
+            'balance_channel_5': bool(balance_state_1 & 0b00010000),
+            'balance_channel_6': bool(balance_state_1 & 0b00100000),
+            'balance_channel_7': bool(balance_state_1 & 0b01000000),
+            'balance_channel_8': bool(balance_state_1 & 0b10000000),
+        }
         index += 1
 
-        if pack_info['balance_state_1'] >1 :
-            self.logger.info(f"balance_state_1: {pack_info['balance_state_1']}")
+        #if pack_info['balance_state_1'] >1 :
+            #self.logger.info(f"balance_state_1: {pack_info['balance_state_1']}")
             #raise ValueError(f"Invalid data")
             #return None
         
-        pack_info['balance_state_2'] = warnstate_bytes[index]
+        balance_state_2 = warnstate_bytes[index]
+        pack_info['balance_state_2'] = {
+            'balance_channel_9': bool(balance_state_2 & 0b00000001),
+            'balance_channel_10': bool(balance_state_2 & 0b00000010),
+            'balance_channel_11': bool(balance_state_2 & 0b00000100),
+            'balance_channel_12': bool(balance_state_2 & 0b00001000),
+            'balance_channel_13': bool(balance_state_2 & 0b00010000),
+            'balance_channel_14': bool(balance_state_2 & 0b00100000),
+            'balance_channel_15': bool(balance_state_2 & 0b01000000),
+            'balance_channel_16': bool(balance_state_2 & 0b10000000),
+        }
         index += 1
 
-        if pack_info['balance_state_2'] >1 :
-            self.logger.info(f"balance_state_2: {pack_info['balance_state_2']}")
+        #if pack_info['balance_state_2'] >1 :
+            #self.logger.info(f"balance_state_2: {pack_info['balance_state_2']}")
             #raise ValueError(f"Invalid data")
             #return None
 
@@ -582,9 +613,9 @@ class TDTBMS232:
         """
         fields = data.split()
         capacity_info = {
-            'remaining_capacity': int(fields[0], 16) / 100,  # Assuming the unit is in 0.01 Ah
-            'full_charge_capacity': int(fields[1], 16) / 100,  # Assuming the unit is in 0.01 Ah
-            'cycle_count': int(fields[2], 16)
+            'remaining_capacity': round(int(fields[0], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'full_charge_capacity': round(int(fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'design_capacity': round(int(fields[2], 16) / 100.0, 2)  # The unit is in 0.01 Ah
         }
         return capacity_info
     
@@ -601,7 +632,7 @@ class TDTBMS232:
         """
         fields = data.split()
         time_date_info = {
-            'year': int(fields[0], 16),
+            'year': int(fields[0], 16) + 2000,
             'month': int(fields[1], 16),
             'day': int(fields[2], 16),
             'hour': int(fields[3], 16),
@@ -775,69 +806,129 @@ class TDTBMS232:
     
     
     
-    def get_capacity_data(bms_connection, pack_number=None):
+    def get_date_time_data(bms_connection, pack_number=None):
         
         try:
             # Generate request
-            self.logger.debug(f"Trying to prepare capacity request")
-            request = self.generate_bms_request("capacity",pack_number)
-            self.logger.debug(f"capacity request: {request}")
+            bms_connection.logger.debug(f"Trying to prepare date time request")
+            request = bms_connection.generate_bms_request("get_date_time",pack_number)
+            bms_connection.logger.debug(f"date time request: {request}")
 
             # Send request to BMS
-            self.logger.debug(f"Trying to send capacity request")
-            if not self.bms_comm.send_data(request):
+            bms_connection.logger.debug(f"Trying to send date time request")
+            if not bms_connection.bms_comm.send_data(request):
                 return None
-            self.logger.debug(f"capacity request sent")
-    
+            bms_connection.logger.debug(f"date time request sent")
+
             # Receive response from BMS
-            self.logger.debug(f"Trying to receive capacity data")
-            response = self.bms_comm.receive_data()
-            self.logger.debug(f"capacity data recieved: {response}")
+            bms_connection.logger.debug(f"Trying to receive date time data")
+            response = bms_connection.bms_comm.receive_data()
+            bms_connection.logger.debug(f"date time data recieved: {response}")
             if response is None:
                 return None
             
             # Parse analog data from response
-            self.logger.debug(f"Trying to parse capacity data")
-            capacity_data = self.parse_capacity_data(response)
-            self.logger.debug(f"capacity data parsed: {capacity_data}")
+            bms_connection.logger.debug(f"Trying to parse date time data")
+            date_time_data = bms_connection.parse_time_date_data(response)
+            bms_connection.logger.debug(f"date time data parsed: {date_time_data}")
+            return date_time_data
+
+        except Exception as e:
+            bms_connection.logger.error(f"An error occurred: {e}")
+            return None
+        
+    def get_capacity_data(bms_connection, pack_number=None):
+    
+        try:
+            # Generate request
+            bms_connection.logger.debug(f"Trying to prepare capacity request")
+            request = bms_connection.generate_bms_request("capacity",pack_number)
+            bms_connection.logger.debug(f"capacity request: {request}")
+
+            # Send request to BMS
+            bms_connection.logger.debug(f"Trying to send capacity request")
+            if not bms_connection.bms_comm.send_data(request):
+                return None
+            bms_connection.logger.debug(f"capacity request sent")
+
+            # Receive response from BMS
+            bms_connection.logger.debug(f"Trying to receive capacity data")
+            response = bms_connection.bms_comm.receive_data()
+            bms_connection.logger.debug(f"capacity data recieved: {response}")
+            if response is None:
+                return None
+            
+            # Parse analog data from response
+            bms_connection.logger.debug(f"Trying to parse capacity data")
+            capacity_data = bms_connection.parse_capacity_data(response)
+            bms_connection.logger.debug(f"capacity data parsed: {capacity_data}")
             return capacity_data
     
         except Exception as e:
-            self.logger.error(f"An error occurred: {e}")
+            bms_connection.logger.error(f"An error occurred: {e}")
             return None
     
-    
+    def get_software_version_data(bms_connection, pack_number=None):
+        
+        try:
+            # Generate request
+            bms_connection.logger.debug(f"Trying to prepare software version request")
+            request = bms_connection.generate_bms_request("software_version",pack_number)
+            bms_connection.logger.debug(f"software version request: {request}")
+
+            # Send request to BMS
+            bms_connection.logger.debug(f"Trying to send software version request")
+            if not bms_connection.bms_comm.send_data(request):
+                return None
+            bms_connection.logger.debug(f"software version request sent")
+
+            # Receive response from BMS
+            bms_connection.logger.debug(f"Trying to receive software version data")
+            response = bms_connection.bms_comm.receive_data()
+            bms_connection.logger.debug(f"software version data recieved: {response}")
+            if response is None:
+                return None
+            
+            # Parse analog data from response
+            bms_connection.logger.debug(f"Trying to parse software version data")
+            software_version_info =  bms_connection.parse_software_version_data(response)
+            bms_connection.logger.debug(f"software version data parsed: {software_version_info}")
+            return software_version_info
+        
+        except Exception as e:
+            bms_connection.logger.error(f"An error occurred: {e}")
+            return None
     
     def get_product_info_data(bms_connection, pack_number=None):
         
         try:
             # Generate request
-            self.logger.debug(f"Trying to prepare product info request")
-            request = self.generate_bms_request("product_info",pack_number)
-            self.logger.debug(f"product info request: {request}")
+            bms_connection.logger.debug(f"Trying to prepare product info request")
+            request = bms_connection.generate_bms_request("product_info",pack_number)
+            bms_connection.logger.debug(f"product info request: {request}")
 
             # Send request to BMS
-            self.logger.debug(f"Trying to send product info request")
-            if not self.bms_comm.send_data(request):
+            bms_connection.logger.debug(f"Trying to send product info request")
+            if not bms_connection.bms_comm.send_data(request):
                 return None
-            self.logger.debug(f"product info request sent")
-    
+            bms_connection.logger.debug(f"product info request sent")
+
             # Receive response from BMS
-            self.logger.debug(f"Trying to receive product info data")
-            response = self.bms_comm.receive_data()
-            self.logger.debug(f"product info data recieved: {response}")
+            bms_connection.logger.debug(f"Trying to receive product info data")
+            response = bms_connection.bms_comm.receive_data()
+            bms_connection.logger.debug(f"product info data recieved: {response}")
             if response is None:
                 return None
             
             # Parse analog data from response
-            self.logger.debug(f"Trying to parse product info data")
-            bms_info, pack_info =  self.parse_product_info_data(response)
-            self.logger.debug(f"product info data parsed: {bms_info}")
-            self.logger.debug(f"product info data parsed: {pack_info}")
+            bms_connection.logger.debug(f"Trying to parse product info data")
+            bms_info, pack_info =  bms_connection.parse_product_info_data(response)
+            bms_connection.logger.debug(f"product info data parsed: {bms_info}")
+            bms_connection.logger.debug(f"product info data parsed: {pack_info}")
             return bms_info, pack_info
     
         except Exception as e:
-            self.logger.error(f"An error occurred: {e}")
+            bms_connection.logger.error(f"An error occurred: {e}")
             return None
 
     def get_pack_quantity_data(self, pack_number=None):
@@ -913,13 +1004,13 @@ class TDTBMS232:
         total_pack_current = round(sum(d.get('pack_current', 0) for d in analog_data),2)
         self.ha_comm.publish_data(total_pack_current, 'A', f"{self.base_topic}.total_pack_current")
 
-        total_soc = round(total_pack_remain_capacity / total_pack_full_capacity * 100, 1) 
+        total_soc = round(total_pack_remain_capacity * 100.0 / total_pack_full_capacity, 2)  if total_pack_full_capacity !=0 else round(0.0, 2)
         self.ha_comm.publish_data(total_soc, '%', f"{self.base_topic}.total_soc")
 
-        total_mean_voltage = round(sum(d.get('pack_total_voltage', 0) for d in analog_data) / total_packs_num, 2)
+        total_mean_voltage = round(sum(d.get('pack_total_voltage', 0) for d in analog_data) / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
         self.ha_comm.publish_data(total_mean_voltage, 'V', f"{self.base_topic}.total_mean_voltage")
 
-        total_power = round(sum(d.get('pack_full_capacity', 0) for d in analog_data),2)
+        total_power = round(sum(d.get('pack_power', 0) for d in analog_data),8)
         self.ha_comm.publish_data(total_power, 'kW', f"{self.base_topic}.total_power")
 
         import random
@@ -1126,28 +1217,28 @@ class TDTBMS232:
         self.ha_comm.publish_sensor_state(total_current, 'A', "total_current")
         self.ha_comm.publish_sensor_discovery("total_current", "A", icons['total_current'], deviceclasses['total_current'], stateclasses['total_current'])
 
-        total_soc = round(total_remain_capacity / total_full_capacity * 100, 1) 
+        total_soc = round(total_remain_capacity * 100.0 / total_full_capacity, 2)  if total_full_capacity !=0 else round(0.0, 2)
         self.ha_comm.publish_sensor_state(total_soc, '%', "total_SOC")
         self.ha_comm.publish_sensor_discovery("total_SOC", "%", icons['total_SOC'], deviceclasses['total_SOC'], stateclasses['total_SOC'])
 
-        total_soh = round(sum(d.get('view_SOH', 0) for d in analog_data) / total_packs_num, 1)
+        total_soh = round(sum(d.get('view_SOH', 0) for d in analog_data) / total_packs_num, 2) if total_packs_num !=0 else round(0.0, 2)
         self.ha_comm.publish_sensor_state(total_soh, '%', "total_SOH")
         self.ha_comm.publish_sensor_discovery("total_SOH", "%", icons['total_SOH'], deviceclasses['total_SOH'], stateclasses['total_SOH'])
 
-        total_voltage = round(sum(d.get('view_voltage', 0) for d in analog_data) / total_packs_num, 2)
+        total_voltage = round(sum(d.get('view_voltage', 0) for d in analog_data) / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
         self.ha_comm.publish_sensor_state(total_voltage, 'V', "total_voltage")
         self.ha_comm.publish_sensor_discovery("total_voltage", "V", icons['total_voltage'], deviceclasses['total_voltage'], stateclasses['total_voltage'])
 
-        total_power = round(sum(d.get('view_power', 0) for d in analog_data),1)
+        total_power = round(sum(d.get('view_power', 0) for d in analog_data),8)
         self.ha_comm.publish_sensor_state(total_power, 'kW', "total_power")
         self.ha_comm.publish_sensor_discovery("total_power", "kW", icons['total_power'], deviceclasses['total_power'], stateclasses['total_power'])
 
-        total_energy_charged = total_power * self.data_refresh_interval / 3600 * 1000 if total_power >= 0 else 0
+        total_energy_charged = total_power * self.data_refresh_interval * 1000.0 / 3600.0  if total_power >= 0 else 0
         total_energy_charged = round(total_energy_charged, 5)
         self.ha_comm.publish_sensor_state(total_energy_charged, 'Wh', "total_energy_charged")
         self.ha_comm.publish_sensor_discovery("total_energy_charged", "Wh", icons['total_energy_charged'], deviceclasses['total_energy_charged'], stateclasses['total_energy_charged'])
 
-        total_energy_discharged = abs(total_power) * self.data_refresh_interval / 3600 * 1000 if total_power < 0 else 0
+        total_energy_discharged = abs(total_power) * self.data_refresh_interval * 1000.0 / 3600.0 if total_power < 0 else 0
         total_energy_discharged = round(total_energy_discharged, 5)
         self.ha_comm.publish_sensor_state(total_energy_discharged, 'Wh', "total_energy_discharged")
         self.ha_comm.publish_sensor_discovery("total_energy_discharged", "Wh", icons['total_energy_discharged'], deviceclasses['total_energy_discharged'], stateclasses['total_energy_discharged'])
@@ -1284,7 +1375,23 @@ class TDTBMS232:
                     for sub_key, sub_value in value.items():
                         self.ha_comm.publish_binary_sensor_state(sub_value, f"pack_{pack_i:02}_{sub_key}")
                         self.ha_comm.publish_binary_sensor_discovery(f"pack_{pack_i:02}_{sub_key}",icon)
-                elif key not in ['cell_number', 'temp_sensor_number', 'control_state', 'balance_state_1', 'balance_state_2']:
+                elif key == 'balance_state_1':
+                    icon = "mdi:battery-check"
+                    for sub_key, sub_value in value.items():
+                        self.ha_comm.publish_binary_sensor_state(sub_value, f"pack_{pack_i:02}_{sub_key}")
+                        self.ha_comm.publish_binary_sensor_discovery(f"pack_{pack_i:02}_{sub_key}",icon)
+                elif key == 'balance_state_2':
+                    icon = "mdi:battery-check"
+                    for sub_key, sub_value in value.items():
+                        self.ha_comm.publish_binary_sensor_state(sub_value, f"pack_{pack_i:02}_{sub_key}")
+                        self.ha_comm.publish_binary_sensor_discovery(f"pack_{pack_i:02}_{sub_key}",icon)
+                elif key == 'control_state':
+                    icon = "mdi:battery-check"
+                    for sub_key, sub_value in value.items():
+                        self.ha_comm.publish_binary_sensor_state(sub_value, f"pack_{pack_i:02}_{sub_key}")
+                        self.ha_comm.publish_binary_sensor_discovery(f"pack_{pack_i:02}_{sub_key}",icon)
+                #elif key not in ['cell_number', 'temp_sensor_number', 'control_state', 'balance_state_1', 'balance_state_2']:
+                elif key not in ['cell_number', 'temp_sensor_number']:
                     icon = "mdi:battery-heart-variant"
                     self.ha_comm.publish_warn_state(value, f"pack_{pack_i:02}_{key}")
                     self.ha_comm.publish_warn_discovery(f"pack_{pack_i:02}_{key}",icon)
