@@ -640,9 +640,9 @@ class TDTBMS232:
         fields = [data_info[i:i + 2] for i in range(0, len(data_info), 2)]
 
         capacity_info = {
-            'remaining_capacity': round(int(fields[0], 16) / 100.0, 2),  # The unit is in 0.01 Ah
-            'full_charge_capacity': round(int(fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
-            'design_capacity': round(int(fields[2], 16) / 100.0, 2)  # The unit is in 0.01 Ah
+            'remaining_capacity': round(int(fields[0] + fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'full_charge_capacity': round(int(fields[2] + fields[3], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'design_capacity': round(int(fields[4] + fields[5], 16) / 100.0, 2)  # The unit is in 0.01 Ah
         }
 
         return capacity_info
@@ -687,6 +687,8 @@ class TDTBMS232:
             raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
+        self.logger.info(f"Raw time date data: {data_info}")
+
         fields = [data_info[i:i + 1] for i in range(0, len(data_info), 2)]
 
         # Convert DATAINFO from hex to integer
