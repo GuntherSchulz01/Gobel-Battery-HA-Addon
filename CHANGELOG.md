@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.25
+
+-   Fixed Date Time Parsing.
+
+
+------------------------------
+
 ## 1.9.24
 
 -   Fixed Date Time and Capacity Parsing.

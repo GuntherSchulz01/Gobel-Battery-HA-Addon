@@ -687,9 +687,9 @@ class TDTBMS232:
             raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
-        self.logger.info(f"Raw time date data: {data_info}")
+        #self.logger.info(f"Raw time date data: {data_info}")
 
-        fields = [data_info[i:i + 1] for i in range(0, len(data_info), 2)]
+        fields = [data_info[i:i + 2] for i in range(0, len(data_info), 2)]
 
         # Convert DATAINFO from hex to integer
         time_date_info = {
