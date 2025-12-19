@@ -93,7 +93,10 @@ class TDTBMS232:
     
         info = f"{pack_number:02X}".encode('ascii')
 
-        adr = b"\x30\x30"
+        if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
+            adr = bytes.fromhex(f"{pack_number + 48:02X}")
+        else:
+            adr = b"\x30\x30"
         
         request = b'\x7e' + ver + adr + cid1 + cid2
         

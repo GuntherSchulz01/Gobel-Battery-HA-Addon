@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.26
+
+-   Fixed generate_bms_request.
+
+
+---------------
+
 ## 1.9.25
 
 -   Fixed Date Time Parsing.
