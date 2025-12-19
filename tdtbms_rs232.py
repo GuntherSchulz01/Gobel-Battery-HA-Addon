@@ -610,17 +610,45 @@ class TDTBMS232:
         
         Returns:
         dict: Parsed capacity information.
-        """
+        
         fields = data.split()
         capacity_info = {
             'remaining_capacity': round(int(fields[0], 16) / 100.0, 2),  # The unit is in 0.01 Ah
             'full_charge_capacity': round(int(fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
             'design_capacity': round(int(fields[2], 16) / 100.0, 2)  # The unit is in 0.01 Ah
         }
+        """
+        # Remove the SOI character (~)
+        if response.startswith('~'):
+            response = response[1:]
+
+        # Extract fields based on the given response structure
+        ver = response[0:2]
+        adr = response[2:4]
+        fixed_hex = response[4:6]
+        rtn = response[6:8]
+        length = response[8:10]
+        lenid = response[10:12]
+
+        # Determine the length of DATAINFO
+        if lenid == '0C':
+            data_info_length = 6  # 2 + 2 + 2 characters for remaining, full, and design capacity
+        else:
+            raise ValueError("Invalid LENID value")
+
+        data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
+        fields = [data_info[i:i + 2] for i in range(0, len(data_info), 2)]
+
+        capacity_info = {
+            'remaining_capacity': round(int(fields[0], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'full_charge_capacity': round(int(fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
+            'design_capacity': round(int(fields[2], 16) / 100.0, 2)  # The unit is in 0.01 Ah
+        }
+
         return capacity_info
     
     
-    def parse_time_date_data(self, data):
+    def parse_time_date_data(self, response):
         """
         Parses the time and date data received from the BMS.
         
@@ -629,7 +657,7 @@ class TDTBMS232:
         
         Returns:
         dict: Parsed time and date information.
-        """
+
         fields = data.split()
         time_date_info = {
             'year': int(fields[0], 16) + 2000,
@@ -639,6 +667,38 @@ class TDTBMS232:
             'minute': int(fields[4], 16),
             'second': int(fields[5], 16)
         }
+        """
+        # Remove the SOI character (~)
+        if response.startswith('~'):
+            response = response[1:]
+
+        # Extract fields based on the given response structure
+        ver = response[0:2]
+        adr = response[2:4]
+        fixed_hex = response[4:6]
+        rtn = response[6:8]
+        length = response[8:10]
+        lenid = response[10:12]
+
+        # Determine the length of DATAINFO
+        if lenid == '0C':
+            data_info_length = 6  # 1 + 1 + 1 + 1 + 1 + 1 characters for year, month, day, hour, minute, second
+        else:
+            raise ValueError("Invalid LENID value")
+
+        data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
+        fields = [data_info[i:i + 1] for i in range(0, len(data_info), 2)]
+
+        # Convert DATAINFO from hex to integer
+        time_date_info = {
+            'year': int(fields[0], 16) + 2000,
+            'month': int(fields[1], 16),
+            'day': int(fields[2], 16),
+            'hour': int(fields[3], 16),
+            'minute': int(fields[4], 16),
+            'second': int(fields[5], 16)
+        }
+
         return time_date_info
     
     

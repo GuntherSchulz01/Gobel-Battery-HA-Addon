@@ -3,6 +3,12 @@
 
 ---------------
 
+## 1.9.22
+
+-   Fixed Date Time and Capacity Parsing.
+
+---------------
+
 ## 1.9.21
 
 -   GS made many fixes.
