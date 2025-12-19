@@ -637,7 +637,8 @@ class TDTBMS232:
         if lenid == '0C':
             data_info_length = 6  # 2 + 2 + 2 characters for remaining, full, and design capacity
         else:
-            raise ValueError("Invalid LENID value")
+            data_info_length = 6
+            #raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
         fields = [data_info[i:i + 2] for i in range(0, len(data_info), 2)]
@@ -687,7 +688,8 @@ class TDTBMS232:
         if lenid == '0C':
             data_info_length = 6  # 1 + 1 + 1 + 1 + 1 + 1 characters for year, month, day, hour, minute, second
         else:
-            raise ValueError("Invalid LENID value")
+            data_info_length = 6
+            #raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
         #self.logger.info(f"Raw time date data: {data_info}")
@@ -780,7 +782,8 @@ class TDTBMS232:
         elif lenid == '28':
             data_info_length = 20  # 20 characters for BMS only
         else:
-            raise ValueError("Invalid LENID value")
+            data_info_length = 40  # 20 characters for BMS and 20 characters for PACK
+            #raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
 

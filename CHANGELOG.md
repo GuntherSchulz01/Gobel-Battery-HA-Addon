@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.27
+
+-   Fixed Date Time and Capacity Parsing to accomodate generate_bms_request.
+
+
+---------------
+
 ## 1.9.26
 
 -   Fixed generate_bms_request.
