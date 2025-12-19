@@ -601,7 +601,7 @@ class TDTBMS232:
     
     
     
-    def parse_capacity_data(self, data):
+    def parse_capacity_data(self, response):
         """
         Parses the capacity data received from the BMS.
         
