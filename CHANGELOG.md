@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.21
+
+-   GS made many fixes.
+
+
+---------------
+
 ## 1.9.20
 
 -   Add JK BMS RS485 support.
