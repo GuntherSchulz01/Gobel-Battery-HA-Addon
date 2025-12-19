@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.28
+
+-  Roll back generate_bms_request and associated Date Time and Capacity Parsing.
+
+
+------------------------------
+
 ## 1.9.27
 
 -   Fixed Date Time and Capacity Parsing to accomodate generate_bms_request.

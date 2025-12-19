@@ -93,10 +93,12 @@ class TDTBMS232:
     
         info = f"{pack_number:02X}".encode('ascii')
 
-        if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
-            adr = bytes.fromhex(f"{pack_number + 48:02X}")
-        else:
-            adr = b"\x30\x30"
+        #if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
+        #    adr = bytes.fromhex(f"{pack_number + 48:02X}")
+        #else:
+        #    adr = b"\x30\x30"
+
+        adr = b"\x30\x30"
         
         request = b'\x7e' + ver + adr + cid1 + cid2
         
@@ -637,8 +639,8 @@ class TDTBMS232:
         if lenid == '0C':
             data_info_length = 6  # 2 + 2 + 2 characters for remaining, full, and design capacity
         else:
-            data_info_length = 6
-            #raise ValueError("Invalid LENID value")
+            #data_info_length = 6
+            raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
         fields = [data_info[i:i + 2] for i in range(0, len(data_info), 2)]
@@ -688,8 +690,8 @@ class TDTBMS232:
         if lenid == '0C':
             data_info_length = 6  # 1 + 1 + 1 + 1 + 1 + 1 characters for year, month, day, hour, minute, second
         else:
-            data_info_length = 6
-            #raise ValueError("Invalid LENID value")
+            #data_info_length = 6
+            raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
         #self.logger.info(f"Raw time date data: {data_info}")
@@ -782,8 +784,8 @@ class TDTBMS232:
         elif lenid == '28':
             data_info_length = 20  # 20 characters for BMS only
         else:
-            data_info_length = 40  # 20 characters for BMS and 20 characters for PACK
-            #raise ValueError("Invalid LENID value")
+            #data_info_length = 40  # 20 characters for BMS and 20 characters for PACK
+            raise ValueError("Invalid LENID value")
 
         data_info = response[12:12 + data_info_length * 2]  # Each character is represented by 2 hex digits
 
