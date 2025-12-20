@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.29
+
+-  Fixed Cell Balancing Indexes.
+
+
+---------------
+
 ## 1.9.28
 
 -  Roll back generate_bms_request and associated Date Time and Capacity Parsing.

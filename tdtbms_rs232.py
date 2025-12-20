@@ -148,7 +148,7 @@ class TDTBMS232:
         
         commands = {
             'charge': (0x46, 0x9A, 0x02),
-            'discharge': (0x46, 0x9B, 0x02)
+            'discharge': (0x46, 0x9B, 0x02),
         }
         
         if command_type not in commands:
@@ -279,7 +279,7 @@ class TDTBMS232:
 
         # Pack total voltage
         pack_total_voltage = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for total voltage
-        pack_total_voltage = round(pack_total_voltage / 1000.0, 3)  # Convert mV to V
+        pack_total_voltage = round(pack_total_voltage *1.000 / 1000.0, 3)  # Convert mV to V
         offset += 2
         pack_data['view_voltage'] = pack_total_voltage
 
@@ -507,14 +507,14 @@ class TDTBMS232:
         # Balance State 1 and 2
         balance_state_1 = warnstate_bytes[index]
         pack_info['balance_state_1'] = {
-            'balance_channel_1': bool(balance_state_1 & 0b00000001),
-            'balance_channel_2': bool(balance_state_1 & 0b00000010),
-            'balance_channel_3': bool(balance_state_1 & 0b00000100),
-            'balance_channel_4': bool(balance_state_1 & 0b00001000),
-            'balance_channel_5': bool(balance_state_1 & 0b00010000),
-            'balance_channel_6': bool(balance_state_1 & 0b00100000),
-            'balance_channel_7': bool(balance_state_1 & 0b01000000),
-            'balance_channel_8': bool(balance_state_1 & 0b10000000),
+            'balance_channel_01': bool(balance_state_1 & 0b00000001),
+            'balance_channel_02': bool(balance_state_1 & 0b00000010),
+            'balance_channel_03': bool(balance_state_1 & 0b00000100),
+            'balance_channel_04': bool(balance_state_1 & 0b00001000),
+            'balance_channel_05': bool(balance_state_1 & 0b00010000),
+            'balance_channel_06': bool(balance_state_1 & 0b00100000),
+            'balance_channel_07': bool(balance_state_1 & 0b01000000),
+            'balance_channel_08': bool(balance_state_1 & 0b10000000),
         }
         index += 1
 
@@ -525,7 +525,7 @@ class TDTBMS232:
         
         balance_state_2 = warnstate_bytes[index]
         pack_info['balance_state_2'] = {
-            'balance_channel_9': bool(balance_state_2 & 0b00000001),
+            'balance_channel_09': bool(balance_state_2 & 0b00000001),
             'balance_channel_10': bool(balance_state_2 & 0b00000010),
             'balance_channel_11': bool(balance_state_2 & 0b00000100),
             'balance_channel_12': bool(balance_state_2 & 0b00001000),
@@ -596,7 +596,7 @@ class TDTBMS232:
             'balance_state_1': pack['balance_state_1'],
             'balance_state_2': pack['balance_state_2'],
             'warn_state_1': pack['warn_state_1'],
-            'warn_state_2': pack['warn_state_2']
+            'warn_state_2': pack['warn_state_2'],
         }
         # packs_data.append(pack_data)
     
@@ -620,7 +620,7 @@ class TDTBMS232:
         capacity_info = {
             'remaining_capacity': round(int(fields[0], 16) / 100.0, 2),  # The unit is in 0.01 Ah
             'full_charge_capacity': round(int(fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
-            'design_capacity': round(int(fields[2], 16) / 100.0, 2)  # The unit is in 0.01 Ah
+            'design_capacity': round(int(fields[2], 16) / 100.0, 2),  # The unit is in 0.01 Ah
         }
         """
         # Remove the SOI character (~)
@@ -648,7 +648,7 @@ class TDTBMS232:
         capacity_info = {
             'remaining_capacity': round(int(fields[0] + fields[1], 16) / 100.0, 2),  # The unit is in 0.01 Ah
             'full_charge_capacity': round(int(fields[2] + fields[3], 16) / 100.0, 2),  # The unit is in 0.01 Ah
-            'design_capacity': round(int(fields[4] + fields[5], 16) / 100.0, 2)  # The unit is in 0.01 Ah
+            'design_capacity': round(int(fields[4] + fields[5], 16) / 100.0, 2),  # The unit is in 0.01 Ah
         }
 
         return capacity_info
@@ -671,7 +671,7 @@ class TDTBMS232:
             'day': int(fields[2], 16),
             'hour': int(fields[3], 16),
             'minute': int(fields[4], 16),
-            'second': int(fields[5], 16)
+            'second': int(fields[5], 16),
         }
         """
         # Remove the SOI character (~)
@@ -705,7 +705,7 @@ class TDTBMS232:
             'day': int(fields[2], 16),
             'hour': int(fields[3], 16),
             'minute': int(fields[4], 16),
-            'second': int(fields[5], 16)
+            'second': int(fields[5], 16),
         }
 
         return time_date_info
@@ -1295,7 +1295,7 @@ class TDTBMS232:
         self.ha_comm.publish_sensor_state(total_soh, '%', "total_SOH")
         self.ha_comm.publish_sensor_discovery("total_SOH", "%", icons['total_SOH'], deviceclasses['total_SOH'], stateclasses['total_SOH'])
 
-        total_voltage = round(sum(d.get('view_voltage', 0) for d in analog_data) / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
+        total_voltage = round(sum(d.get('view_voltage', 0) for d in analog_data) * 1.000 / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
         self.ha_comm.publish_sensor_state(total_voltage, 'V', "total_voltage")
         self.ha_comm.publish_sensor_discovery("total_voltage", "V", icons['total_voltage'], deviceclasses['total_voltage'], stateclasses['total_voltage'])
 
