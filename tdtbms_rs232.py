@@ -233,6 +233,7 @@ class TDTBMS232:
         cell_voltages = []
         for cell_index in range(num_cells):
             voltage = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for voltage
+            voltage = round(voltage * 1.000 , 3)  # Convert mV to V
             cell_voltages.append(voltage)
             offset += 2
         pack_data['cell_voltages'] = cell_voltages
@@ -279,7 +280,7 @@ class TDTBMS232:
 
         # Pack total voltage
         pack_total_voltage = int(fields[offset] + fields[offset + 1], 16)  # Combine two bytes for total voltage
-        pack_total_voltage = round(pack_total_voltage *1.000 / 1000.0, 3)  # Convert mV to V
+        pack_total_voltage = round(pack_total_voltage * 1.000 / 1000.0, 3)  # Convert mV to V
         offset += 2
         pack_data['view_voltage'] = pack_total_voltage
 
@@ -1071,13 +1072,13 @@ class TDTBMS232:
         total_pack_remain_capacity = round(sum(d.get('pack_remain_capacity', 0) for d in analog_data),2)
         self.ha_comm.publish_data(total_pack_remain_capacity, 'Ah', f"{self.base_topic}.total_pack_remain_capacity")
 
-        total_pack_current = round(sum(d.get('pack_current', 0) for d in analog_data),2)
+        total_pack_current = round(sum(d.get('pack_current', 0) for d in analog_data), 2)
         self.ha_comm.publish_data(total_pack_current, 'A', f"{self.base_topic}.total_pack_current")
 
         total_soc = round(total_pack_remain_capacity * 100.0 / total_pack_full_capacity, 2)  if total_pack_full_capacity !=0 else round(0.0, 2)
         self.ha_comm.publish_data(total_soc, '%', f"{self.base_topic}.total_soc")
 
-        total_mean_voltage = round(sum(d.get('pack_total_voltage', 0) for d in analog_data) / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
+        total_mean_voltage = round(sum(d.get('pack_total_voltage', 0) for d in analog_data) * 1.000 / total_packs_num, 3) if total_packs_num !=0 else round(0.0, 3)
         self.ha_comm.publish_data(total_mean_voltage, 'V', f"{self.base_topic}.total_mean_voltage")
 
         total_power = round(sum(d.get('pack_power', 0) for d in analog_data),8)
