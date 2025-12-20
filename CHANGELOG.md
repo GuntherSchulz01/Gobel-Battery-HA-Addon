@@ -3,6 +3,13 @@
 
 ---------------
 
+## 1.9.30
+
+-  Minor Updates.
+
+
+---------------
+
 ## 1.9.29
 
 -  Fixed Cell Balancing Indexes.
