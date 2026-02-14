@@ -238,18 +238,31 @@ def run():
 
                 try:
 
-                    for pack in pack_list:
-                        software_version_info = bms.get_software_version_data(pack)
-                        bms_info, pack_info = bms.get_product_info_data(pack)
-                        capacity_data = bms.get_capacity_data(pack)
-                        date_time_data = bms.get_date_time_data(pack)
+                    # for pack in pack_list:
+                    #     software_version_info = bms.get_software_version_data(pack)
+                    #     bms_info, pack_info = bms.get_product_info_data(pack)
+                    #     capacity_data = bms.get_capacity_data(pack)
+                    #     date_time_data = bms.get_date_time_data(pack)
                         
-                        logger.info(f"Info parsing for pack: {pack}")
-                        logger.info(f"BMS software version: {software_version_info}")
-                        logger.info(f"BMS serial number: {bms_info}")
-                        logger.info(f"Pack serial number: {pack_info}")
-                        logger.info(f"pack Capacity data: {capacity_data}")
-                        logger.info(f"pack Date Time data: {date_time_data}")
+                    #     logger.info(f"Info parsing for pack: {pack}")
+                    #     logger.info(f"BMS software version: {software_version_info}")
+                    #     logger.info(f"BMS serial number: {bms_info}")
+                    #     logger.info(f"Pack serial number: {pack_info}")
+                    #     logger.info(f"pack Capacity data: {capacity_data}")
+                    #     logger.info(f"pack Date Time data: {date_time_data}")
+
+                    
+                    software_version_info = bms.get_software_version_data()
+                    bms_info, pack_info = bms.get_product_info_data()
+                    capacity_data = bms.get_capacity_data()
+                    date_time_data = bms.get_date_time_data()
+                    
+                    logger.info(f"Info parsing for pack: {pack}")
+                    logger.info(f"BMS software version: {software_version_info}")
+                    logger.info(f"BMS serial number: {bms_info}")
+                    logger.info(f"Pack serial number: {pack_info}")
+                    logger.info(f"pack Capacity data: {capacity_data}")
+                    logger.info(f"pack Date Time data: {date_time_data}")
 
                     while True:  # Run continuously
 
