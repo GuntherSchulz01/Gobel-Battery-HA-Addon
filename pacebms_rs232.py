@@ -210,7 +210,7 @@ class PACEBMS232:
         
         len_id = struct.pack('B', length)
         data = struct.pack('BBBBBB', SOI, VER, ADR, CID1, CID2, length) + data_info + struct.pack('BB', EOI)
-        chk_sum = calculate_checksum(data)
+        chk_sum = self.chksum_calc(data)
         
         request = data[:-1] + struct.pack('B', chk_sum) + data[-1:]
         return request
