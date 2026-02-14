@@ -98,7 +98,12 @@ class TDTBMS232:
         #else:
         #    adr = b"\x30\x30"
 
-        adr = b"\x30\x30"
+        if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
+            adr = info
+        else:
+            adr = b"\x30\x30"
+
+        # adr = b"\x30\x30"
         
         request = b'\x7e' + ver + adr + cid1 + cid2
         
