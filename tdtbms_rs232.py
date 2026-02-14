@@ -71,28 +71,17 @@ class TDTBMS232:
             'pack_quantity': b"\x39\x30",
         }
         
-        # lenids_table = {
-        #     'pack_number': b"000",
-        #     'analog': b"002",
-        #     'software_version': b"000",
-        #     'product_info': b"000",
-        #     'capacity': b"000",
-        #     'warning_info': b"002",
-        #     'get_date_time': b"000",
-        #     'pack_quantity': b"000",
-        # }
-    
         lenids_table = {
             'pack_number': b"000",
             'analog': b"002",
-            'software_version': b"002",
-            'product_info': b"002",
-            'capacity': b"002",
+            'software_version': b"000",
+            'product_info': b"000",
+            'capacity': b"000",
             'warning_info': b"002",
-            'get_date_time': b"002",
+            'get_date_time': b"000",
             'pack_quantity': b"000",
         }
-
+    
         if command not in commands_table:
             raise ValueError("Invalid command")
     
@@ -109,12 +98,12 @@ class TDTBMS232:
         #else:
         #    adr = b"\x30\x30"
 
-        # if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
-        #     adr = info
-        # else:
-        #     adr = b"\x30\x30"
+        if command in ['software_version', 'product_info', 'capacity', 'get_date_time']:
+             adr = info
+        else:
+             adr = b"\x30\x30"
 
-        adr = b"\x30\x30"
+        #adr = b"\x30\x30"
         
         request = b'\x7e' + ver + adr + cid1 + cid2
         

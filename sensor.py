@@ -257,7 +257,7 @@ def run():
                     capacity_data = bms.get_capacity_data()
                     date_time_data = bms.get_date_time_data()
                     
-                    logger.info(f"Info parsing for pack: {pack}")
+                    #logger.info(f"Info parsing for pack: {pack}")
                     logger.info(f"BMS software version: {software_version_info}")
                     logger.info(f"BMS serial number: {bms_info}")
                     logger.info(f"Pack serial number: {pack_info}")
