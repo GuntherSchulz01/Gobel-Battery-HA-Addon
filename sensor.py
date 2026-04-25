@@ -226,75 +226,23 @@ def run():
 
             logger.info("Looking for valid packs...")
 
-            pack_list = []
-
-            for pack_number in range(0, max_parallel_allowed+1):  #up to max_parallel_allowed
-                result = bms.get_pack_num_data(pack_number)
-                logger.debug(f"pack_number {result}")
-                if result == pack_number:
-                    pack_list.append(pack_number)
-
-            logger.info(f"Found packs list: {pack_list}")
-            
-            if len(pack_list) > 0:
-
-                try:
-                    while True:  # Run continuously
-
-                        bms.publish_analog_data_mqtt(pack_list)
-                        time.sleep(1)
-                        bms.publish_warning_data_mqtt(pack_list)
-                    
-                        time.sleep(data_refresh_interval)  # Sleep for 5 seconds between each iteration
-
-                except KeyboardInterrupt:
-                    logger.info("Stopping the program...")
-                
-                finally:
-                    mqtt_client.loop_stop()
-
-
             # pack_list = []
 
-            # pack_quantity = bms.get_pack_quantity_data()
-
-            # pack_list = list(range(1, pack_quantity + 1))
+            # for pack_number in range(0, max_parallel_allowed+1):  #up to max_parallel_allowed
+            #     result = bms.get_pack_num_data(pack_number)
+            #     logger.debug(f"pack_number {result}")
+            #     if result == pack_number:
+            #         pack_list.append(pack_number)
 
             # logger.info(f"Found packs list: {pack_list}")
             
             # if len(pack_list) > 0:
 
             #     try:
-
-            #         # for pack in pack_list:
-            #         #     software_version_info = bms.get_software_version_data(pack)
-            #         #     bms_info, pack_info = bms.get_product_info_data(pack)
-            #         #     capacity_data = bms.get_capacity_data(pack)
-            #         #     date_time_data = bms.get_date_time_data(pack)
-                        
-            #         #     logger.info(f"Info parsing for pack: {pack}")
-            #         #     logger.info(f"BMS software version: {software_version_info}")
-            #         #     logger.info(f"BMS serial number: {bms_info}")
-            #         #     logger.info(f"Pack serial number: {pack_info}")
-            #         #     logger.info(f"pack Capacity data: {capacity_data}")
-            #         #     logger.info(f"pack Date Time data: {date_time_data}")
-
-                    
-            #         software_version_info = bms.get_software_version_data()
-            #         bms_info, pack_info = bms.get_product_info_data()
-            #         capacity_data = bms.get_capacity_data()
-            #         date_time_data = bms.get_date_time_data()
-                    
-            #         #logger.info(f"Info parsing for pack: {pack}")
-            #         logger.info(f"BMS software version: {software_version_info}")
-            #         logger.info(f"BMS serial number: {bms_info}")
-            #         logger.info(f"Pack serial number: {pack_info}")
-            #         logger.info(f"pack Capacity data: {capacity_data}")
-            #         logger.info(f"pack Date Time data: {date_time_data}")
-
             #         while True:  # Run continuously
 
             #             bms.publish_analog_data_mqtt(pack_list)
+            #             time.sleep(1)
             #             bms.publish_warning_data_mqtt(pack_list)
                     
             #             time.sleep(data_refresh_interval)  # Sleep for 5 seconds between each iteration
@@ -304,6 +252,58 @@ def run():
                 
             #     finally:
             #         mqtt_client.loop_stop()
+
+
+            pack_list = []
+
+            pack_quantity = bms.get_pack_quantity_data()
+
+            pack_list = list(range(1, pack_quantity + 1))
+
+            logger.info(f"Found packs list: {pack_list}")
+            
+            if len(pack_list) > 0:
+
+                try:
+
+                    # for pack in pack_list:
+                    #     software_version_info = bms.get_software_version_data(pack)
+                    #     bms_info, pack_info = bms.get_product_info_data(pack)
+                    #     capacity_data = bms.get_capacity_data(pack)
+                    #     date_time_data = bms.get_date_time_data(pack)
+                        
+                    #     logger.info(f"Info parsing for pack: {pack}")
+                    #     logger.info(f"BMS software version: {software_version_info}")
+                    #     logger.info(f"BMS serial number: {bms_info}")
+                    #     logger.info(f"Pack serial number: {pack_info}")
+                    #     logger.info(f"pack Capacity data: {capacity_data}")
+                    #     logger.info(f"pack Date Time data: {date_time_data}")
+
+                    
+                    software_version_info = bms.get_software_version_data()
+                    bms_info, pack_info = bms.get_product_info_data()
+                    capacity_data = bms.get_capacity_data()
+                    date_time_data = bms.get_date_time_data()
+                    
+                    #logger.info(f"Info parsing for pack: {pack}")
+                    logger.info(f"BMS software version: {software_version_info}")
+                    logger.info(f"BMS serial number: {bms_info}")
+                    logger.info(f"Pack serial number: {pack_info}")
+                    logger.info(f"pack Capacity data: {capacity_data}")
+                    logger.info(f"pack Date Time data: {date_time_data}")
+
+                    while True:  # Run continuously
+
+                        bms.publish_analog_data_mqtt(pack_list)
+                        bms.publish_warning_data_mqtt(pack_list)
+                    
+                        time.sleep(data_refresh_interval)  # Sleep for 5 seconds between each iteration
+
+                except KeyboardInterrupt:
+                    logger.info("Stopping the program...")
+                
+                finally:
+                    mqtt_client.loop_stop()
 
         if battery_port == 'rs485':
             logger.info("Please use RS232")
